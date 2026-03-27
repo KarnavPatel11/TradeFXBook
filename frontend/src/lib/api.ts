@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://tradefxbook.onrender.com/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -30,7 +30,7 @@ api.interceptors.response.use(
       try {
         // Attempt to refresh token using httpOnly refresh cookie
         const res = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/auth/refresh`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'https://tradefxbook.onrender.com/api'}/auth/refresh`,
           {},
           { withCredentials: true }
         );
