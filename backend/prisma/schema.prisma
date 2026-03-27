@@ -1,0 +1,255 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(cuid())
+  email         String          @unique
+  passwordHash  String?
+  name          String
+  username      String          @unique
+  avatarUrl     String?
+  bio           String?
+  emailVerified Boolean         @default(false)
+  isOnline      Boolean         @default(false)
+  totalPnl      Float           @default(0)
+  winRate       Float           @default(0)
+  totalTrades   Int             @default(0)
+  timezone      String          @default("UTC")
+  currency      String          @default("USD")
+  theme         String          @default("dark")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  accounts      BrokerAccount[]
+  trades        Trade[]
+  journals      JournalEntry[]
+  backtests     Backtest[]
+  aiReports     AiReport[]
+  messages      Message[]
+  followers     Follow[]        @relation("following")
+  following     Follow[]        @relation("follower")
+  notifications Notification[]
+  leaderboard   Leaderboard?
+
+  @@map("users")
+}
+
+model BrokerAccount {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brokerName       String
+  accountId        String
+  accountNumber    String
+  serverName       String
+  investorPassword String
+  accountName      String
+  currency         String    @default("USD")
+  balance          Float     @default(0)
+  equity           Float     @default(0)
+  leverage         Int       @default(100)
+  platform         String    // MT4 or MT5
+  status           String    @default("disconnected")
+  metaApiId        String?
+  lastSyncAt       DateTime?
+  autoSync         Boolean   @default(true)
+  syncInterval     Int       @default(5)
+  createdAt        DateTime  @default(now())
+
+  trades           Trade[]
+
+  @@map("broker_accounts")
+}
+
+model Trade {
+  id             String          @id @default(cuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId      String?
+  account        BrokerAccount?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  brokerTradeId  String?
+  symbol         String
+  direction      String          // BUY or SELL
+  entryPrice     Float
+  exitPrice      Float?
+  stopLoss       Float?
+  takeProfit     Float?
+  lotSize        Float
+  openTime       DateTime
+  closeTime      DateTime?
+  pnl            Float?
+  pnlPercent     Float?
+  pips           Float?
+  riskReward     Float?
+  riskPercent    Float?
+  commission     Float?
+  swap           Float?
+  duration       Int?
+  status         String          @default("open")
+  session        String?
+  strategyTags   String          @default("[]")
+  mistakeTags    String          @default("[]")
+  emotionRating  Int?
+  tradeRating    Int?
+  notes          String?
+  preTradePlan   String?
+  postTradeNotes String?
+  screenshots    String          @default("[]")
+  checklistItems String?
+  isShared       Boolean         @default(false)
+  importedFrom   String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([userId, openTime])
+  @@index([userId, symbol])
+  @@index([userId, status])
+  @@map("trades")
+}
+
+model JournalEntry {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  content     String
+  mood        String?
+  date        DateTime
+  tags        String    @default("[]")
+  attachments String    @default("[]")
+  isPrivate   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, date])
+  @@map("journal_entries")
+}
+
+model Backtest {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  symbol          String
+  timeframe       String
+  startDate       DateTime
+  endDate         DateTime
+  startingBalance Float
+  finalBalance    Float?
+  totalTrades     Int       @default(0)
+  winRate         Float?
+  profitFactor    Float?
+  maxDrawdown     Float?
+  totalPnl        Float?
+  avgRR           Float?
+  trades          String?
+  status          String    @default("in_progress")
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
+  @@map("backtests")
+}
+
+model AiReport {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportType      String
+  dateFrom        DateTime
+  dateTo          DateTime
+  letterGrade     String?
+  overallScore    Float?
+  summary         String?
+  strengths       String    @default("[]")
+  weaknesses      String    @default("[]")
+  patterns        String?
+  recommendations String    @default("[]")
+  revengeTrading  String?
+  emotionAnalysis String?
+  riskAnalysis    String?
+  rawResponse     String?
+  tradesAnalyzed  Int       @default(0)
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
+  @@map("ai_reports")
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roomId      String    @default("general")
+  content     String
+  attachments String    @default("[]")
+  replyToId   String?
+  reactions   String?
+  isEdited    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([roomId, createdAt])
+  @@map("messages")
+}
+
+model Follow {
+  id          String    @id @default(cuid())
+  followerId  String
+  follower    User      @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User      @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+model Leaderboard {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  period       String
+  rank         Int
+  totalPnl     Float
+  winRate      Float
+  totalTrades  Int
+  profitFactor Float
+  updatedAt    DateTime  @updatedAt
+
+  @@map("leaderboards")
+}
+
+model EconomicEvent {
+  id        String    @id @default(cuid())
+  title     String
+  country   String
+  currency  String
+  impact    String
+  date      DateTime
+  forecast  String?
+  previous  String?
+  actual    String?
+  createdAt DateTime  @default(now())
+
+  @@index([date])
+  @@map("economic_events")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  data      String?
+  read      Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  @@index([userId, read])
+  @@map("notifications")
+}
