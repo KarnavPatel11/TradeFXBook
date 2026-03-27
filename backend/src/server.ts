@@ -26,7 +26,7 @@ const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [process.env.FRONTEND_URL || 'http://localhost:3000', /^http:\/\/localhost:\d+$/, /^https:\/\/.*\.vercel\.app$/],
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -35,7 +35,7 @@ const io = new Server(httpServer, {
 // Middleware
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: [process.env.FRONTEND_URL || 'http://localhost:3000', /^http:\/\/localhost:\d+$/, /^https:\/\/.*\.vercel\.app$/],
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
