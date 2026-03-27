@@ -59,8 +59,7 @@ export default function BacktestSessionPage() {
       },
     });
 
-    // @ts-ignore - Lightweight Charts v5 typings mismatch, method exists at runtime
-    const series = chart.addCandlestickSeries({
+    const series = (chart as any).addCandlestickSeries({
       upColor: "#22c55e",
       downColor: "#ef4444",
       borderVisible: false,
