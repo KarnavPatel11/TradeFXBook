@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -93,15 +93,15 @@ model Trade {
   duration       Int?
   status         String          @default("open")
   session        String?
-  strategyTags   String          @default("[]")
-  mistakeTags    String          @default("[]")
+  strategyTags   String[]
+  mistakeTags    String[]
   emotionRating  Int?
   tradeRating    Int?
   notes          String?
   preTradePlan   String?
   postTradeNotes String?
-  screenshots    String          @default("[]")
-  checklistItems String?
+  screenshots    String[]
+  checklistItems Json?
   isShared       Boolean         @default(false)
   importedFrom   String?
   createdAt      DateTime        @default(now())
@@ -121,8 +121,8 @@ model JournalEntry {
   content     String
   mood        String?
   date        DateTime
-  tags        String    @default("[]")
-  attachments String    @default("[]")
+  tags        String[]
+  attachments String[]
   isPrivate   Boolean   @default(true)
   createdAt   DateTime  @default(now())
 
@@ -147,7 +147,7 @@ model Backtest {
   maxDrawdown     Float?
   totalPnl        Float?
   avgRR           Float?
-  trades          String?
+  trades          Json?
   status          String    @default("in_progress")
   createdAt       DateTime  @default(now())
 
@@ -165,13 +165,13 @@ model AiReport {
   letterGrade     String?
   overallScore    Float?
   summary         String?
-  strengths       String    @default("[]")
-  weaknesses      String    @default("[]")
-  patterns        String?
-  recommendations String    @default("[]")
-  revengeTrading  String?
-  emotionAnalysis String?
-  riskAnalysis    String?
+  strengths       String[]
+  weaknesses      String[]
+  patterns        Json?
+  recommendations String[]
+  revengeTrading  Json?
+  emotionAnalysis Json?
+  riskAnalysis    Json?
   rawResponse     String?
   tradesAnalyzed  Int       @default(0)
   createdAt       DateTime  @default(now())
@@ -186,9 +186,9 @@ model Message {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   roomId      String    @default("general")
   content     String
-  attachments String    @default("[]")
+  attachments String[]
   replyToId   String?
-  reactions   String?
+  reactions   Json?
   isEdited    Boolean   @default(false)
   createdAt   DateTime  @default(now())
 
@@ -246,7 +246,7 @@ model Notification {
   type      String
   title     String
   message   String
-  data      String?
+  data      Json?
   read      Boolean   @default(false)
   createdAt DateTime  @default(now())
 
