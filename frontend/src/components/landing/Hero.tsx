@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Play, Star } from "lucide-react";
 
@@ -11,6 +11,32 @@ export function Hero() {
     { author: "Gold Magicians", text: "Powerful insights that transformed our gold trading strategy." },
     { author: "Top G Traders", text: "Best Software for you to go from Beginner to Advanced trader." },
   ];
+
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const mouseXSpring = useSpring(x, { stiffness: 300, damping: 30 });
+  const mouseYSpring = useSpring(y, { stiffness: 300, damping: 30 });
+
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["10deg", "-10deg"]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-10deg", "10deg"]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const xPct = mouseX / width - 0.5;
+    const yPct = mouseY / height - 0.5;
+    x.set(xPct);
+    y.set(yPct);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
 
   return (
     <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
@@ -77,17 +103,29 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
           className="mt-20 relative max-w-6xl mx-auto"
+          style={{ perspective: 2000 }}
         >
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-20 pointer-events-none rounded-2xl" />
-          <div className="relative rounded-2xl border border-white/10 bg-secondary/50 shadow-2xl overflow-hidden glass-card glow-blue">
+          <motion.div
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            style={{
+              rotateX,
+              rotateY,
+              transformStyle: "preserve-3d"
+            }}
+            className="relative rounded-2xl border border-white/10 bg-secondary/50 shadow-2xl overflow-hidden glass-card glow-blue group"
+          >
+            <div 
+              style={{ transform: "translateZ(50px)" }}
+              className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-20 pointer-events-none rounded-2xl" 
+            />
             <div className="h-10 border-b border-white/10 bg-secondary flex items-center px-4 gap-2">
               <div className="w-3 h-3 rounded-full bg-red/80" />
               <div className="w-3 h-3 rounded-full bg-gold/80" />
               <div className="w-3 h-3 rounded-full bg-success/80" />
             </div>
-            <div className="aspect-[16/9] bg-[url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-70 mix-blend-luminosity"></div>
-            {/* Real app would use an interface mockup image here but using an abstract placeholder for code generation */}
-          </div>
+            <div className="aspect-[16/9] bg-[url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-70 mix-blend-luminosity duration-500 group-hover:mix-blend-normal group-hover:opacity-100 transition-all"></div>
+          </motion.div>
         </motion.div>
 
         {/* Testimonial Strip */}

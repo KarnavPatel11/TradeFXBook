@@ -13,14 +13,20 @@ import {
   TrendingUp,
   Maximize2
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
-import { createChart, IChartApi, ISeriesApi, CandlestickData } from "lightweight-charts";
+
+const BacktestChart = dynamic(() => import("@/components/dashboard/BacktestChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="w-8 h-8 rounded-full border-2 border-accent border-r-transparent animate-spin" />
+    </div>
+  )
+});
 
 export default function BacktestSessionPage() {
   const router = useRouter();
-  const chartContainerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
@@ -32,103 +38,9 @@ export default function BacktestSessionPage() {
   const [sl, setSl] = useState("");
   const [tp, setTp] = useState("");
 
-  // Initialize TradingView Lightweight Chart
-  useEffect(() => {
-    if (!chartContainerRef.current) return;
-
-    const chart = createChart(chartContainerRef.current, {
-      layout: {
-        background: { color: "transparent" },
-        textColor: "rgba(255, 255, 255, 0.5)",
-      },
-      grid: {
-        vertLines: { color: "rgba(255, 255, 255, 0.05)" },
-        horzLines: { color: "rgba(255, 255, 255, 0.05)" },
-      },
-      crosshair: {
-        mode: 0,
-        vertLine: { color: "rgba(255, 255, 255, 0.2)", width: 1, style: 1 },
-        horzLine: { color: "rgba(255, 255, 255, 0.2)", width: 1, style: 1 },
-      },
-      timeScale: {
-        borderColor: "rgba(255, 255, 255, 0.1)",
-        timeVisible: true,
-      },
-      rightPriceScale: {
-        borderColor: "rgba(255, 255, 255, 0.1)",
-      },
-    });
-
-    const series = (chart as any).addCandlestickSeries({
-      upColor: "#22c55e",
-      downColor: "#ef4444",
-      borderVisible: false,
-      wickUpColor: "#22c55e",
-      wickDownColor: "#ef4444",
-    });
-
-    // Generate mock initial data
-    const mockData: CandlestickData[] = [];
-    let time = new Date("2023-01-01T00:00:00Z").getTime();
-    let c = 1.0500;
-    for (let i = 0; i < 100; i++) {
-      const o = c;
-      const h = o + Math.random() * 0.0050;
-      const l = o - Math.random() * 0.0050;
-      c = o + (Math.random() - 0.5) * 0.0060;
-      mockData.push({
-        time: (time / 1000) as any,
-        open: o,
-        high: Math.max(o, c, h),
-        low: Math.min(o, c, l),
-        close: c,
-      });
-      time += 3600000; // 1H
-    }
-    
-    series.setData(mockData);
-
-    chartRef.current = chart;
-    seriesRef.current = series;
-
-    const handleResize = () => {
-      chart.applyOptions({ width: chartContainerRef.current?.clientWidth });
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      chart.remove();
-    };
-  }, []);
-
-  // Mock playback simulation
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPlaying && seriesRef.current) {
-      interval = setInterval(() => {
-        const lastData = seriesRef.current!.dataByIndex(seriesRef.current!.data().length - 1) as any;
-        const o = lastData ? lastData.close : 1.0500;
-        const h = o + Math.random() * 0.0020;
-        const l = o - Math.random() * 0.0020;
-        const c = o + (Math.random() - 0.5) * 0.0040;
-        
-        seriesRef.current!.update({
-          time: (lastData.time + 3600) as any,
-          open: o,
-          high: Math.max(o, c, h),
-          low: Math.min(o, c, l),
-          close: c,
-        });
-
-        // Wiggle equity
-        setEquity(prev => prev + (Math.random() - 0.5) * 50);
-
-      }, 1000 / speed);
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying, speed]);
+  const handleEquityChange = (change: number) => {
+    setEquity(prev => prev + change);
+  };
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col space-y-4">
@@ -216,7 +128,7 @@ export default function BacktestSessionPage() {
            </div>
            
            {/* Chart Container Hook */}
-           <div ref={chartContainerRef} className="flex-1 w-full rounded-2xl overflow-hidden" />
+           <BacktestChart isPlaying={isPlaying} speed={speed} onEquityChange={handleEquityChange} />
         </div>
 
         {/* Sidebar Order Panel */}

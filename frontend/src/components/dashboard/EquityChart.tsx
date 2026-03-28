@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import {
   Area,
@@ -22,7 +22,7 @@ interface EquityChartProps {
   isLoading?: boolean;
 }
 
-export function EquityChart({ data, isLoading }: EquityChartProps) {
+export const EquityChart = memo(function EquityChart({ data, isLoading }: EquityChartProps) {
   const minEquity = useMemo(() => {
     if (!data || data.length === 0) return 0;
     return Math.min(...data.map(d => d.equity)) * 0.99; // 1% padding below min
@@ -104,4 +104,4 @@ export function EquityChart({ data, isLoading }: EquityChartProps) {
       </AreaChart>
     </ResponsiveContainer>
   );
-}
+});

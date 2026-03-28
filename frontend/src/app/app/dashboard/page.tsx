@@ -13,8 +13,17 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 import { api } from "@/lib/api";
-import { EquityChart } from "@/components/dashboard/EquityChart";
+import dynamic from "next/dynamic";
 import { RecentTradesTable } from "@/components/dashboard/RecentTradesTable";
+
+const EquityChart = dynamic(() => import("@/components/dashboard/EquityChart").then(mod => mod.EquityChart), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full flex items-center justify-center">
+      <div className="w-8 h-8 rounded-full border-2 border-accent border-r-transparent animate-spin" />
+    </div>
+  )
+});
 import { CalendarHeatmap } from "@/components/dashboard/CalendarHeatmap";
 
 interface DashboardStats {
